@@ -1,73 +1,71 @@
+version: '3.8'
+
 services:
-
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: auth-postgres
-    restart: always
-
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-
-    ports:
-      - "5432:5432"
-
+      POSTGRES_USER: ${POSTGRES_USER:-authuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe123!}
+      POSTGRES_DB: ${POSTGRES_DB:-authdb}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-authuser} -d ${POSTGRES_DB:-authdb}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - auth-network
 
   backend:
     build:
-      context: ./backend/AuthApp.Api
+      context: ./backend   # Path to solution root (contains AuthApp.sln and Dockerfile)
       dockerfile: Dockerfile
-
-    container_name: auth-backend
-    restart: always
-
+    container_name: auth-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=${POSTGRES_DB:-authdb};Username=${POSTGRES_USER:-authuser};Password=${POSTGRES_PASSWORD:-ChangeMe123!}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Fido__Domain=${FIDO_DOMAIN}
+      - Fido__Origin=${FIDO_ORIGIN} 
+    ports:
+      - "5001:8080"
     depends_on:
       postgres:
         condition: service_healthy
-
-    ports:
-      - "8080:8080"
-      - "8443:8443"
-
-    environment:
-      ConnectionStrings__PostgreSQL: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
-
-      Jwt__Key: ${JWT_KEY}
-      Jwt__Issuer: ${JWT_ISSUER}
-      Jwt__Audience: ${JWT_AUDIENCE}
-
-      Fido__Domain: ${FIDO_DOMAIN}
-      Fido__Origin: ${FIDO_ORIGIN}
-
-      ASPNETCORE_URLS: "https://+:8443;http://+:8080"
-      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
-      ASPNETCORE_Kestrel__Certificates__Default__Password: devpassword
-
-    volumes:
-      - ./certs:/https:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - auth-network
 
   frontend:
     build:
-      context: ./frontend/auth-app
+      context: ./frontend/auth-app   # Path to Angular project (contains Dockerfile and nginx.conf)
       dockerfile: Dockerfile
-
     container_name: auth-frontend
-    restart: always
-
-    depends_on:
-      - backend
-
+    restart: unless-stopped
     ports:
       - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - auth-network
 
 volumes:
   postgres_data:
+    driver: local
+
+networks:
+  auth-network:
+    driver: bridge
