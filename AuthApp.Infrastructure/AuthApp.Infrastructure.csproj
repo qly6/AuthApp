@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AuthApp.Persistence\AuthApp.Persistence.csproj" />
+  </ItemGroup>
+
 </Project>
