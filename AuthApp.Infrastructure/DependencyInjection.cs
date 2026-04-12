@@ -15,6 +15,8 @@ namespace AuthApp.Infrastructure
             // ✅ Token (JWT)
             services.AddScoped<ITokenService, JwtTokenService>();
 
+            services.AddScoped<IPasskeyService, PasskeyService>();
+
             return services;
         }
     }
