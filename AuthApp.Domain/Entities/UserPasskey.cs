@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AuthApp.Domain.Entities
+﻿namespace AuthApp.Domain.Entities
 {
-    internal class UserPasskey
+    public class UserPasskey
     {
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+
+        public string CredentialId { get; set; } = default!;
+        public string PublicKey { get; set; } = default!;
+        public uint SignCount { get; set; }
     }
 }

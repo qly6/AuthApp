@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AuthApp.Application.Interfaces
+﻿namespace AuthApp.Application.Interfaces
 {
-    internal interface ITokenService
+    public interface ITokenService
     {
+        string GenerateAccessToken(Guid userId);
+        string GenerateRefreshToken();
     }
 }

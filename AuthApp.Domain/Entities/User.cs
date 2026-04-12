@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AuthApp.Domain.Entities
+﻿namespace AuthApp.Domain.Entities
 {
-    internal class User
+    public class User
     {
+        public Guid Id { get; set; }
+        public string Email { get; set; } = default!;
+        public bool IsActive { get; set; } = true;
+
+        public UserPassword? Password { get; set; }
+        public UserMfa? Mfa { get; set; }
+        public ICollection<UserPasskey> Passkeys { get; set; } = new List<UserPasskey>();
     }
 }

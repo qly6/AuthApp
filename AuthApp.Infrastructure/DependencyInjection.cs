@@ -1,12 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AuthApp.Application.Interfaces;
+using AuthApp.Infrastructure.Security;
+using AuthApp.Infrastructure.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthApp.Infrastructure
 {
-    internal class DependencyInjection
+    public static class DependencyInjection
     {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+        {
+            // ✅ MFA
+            services.AddScoped<IMfaService, MfaService>();
+
+            // ✅ Token (JWT)
+            services.AddScoped<ITokenService, JwtTokenService>();
+
+            return services;
+        }
     }
 }
