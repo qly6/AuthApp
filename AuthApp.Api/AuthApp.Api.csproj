@@ -11,11 +11,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\AuthApp.Application\AuthApp.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AuthApp.Application\AuthApp.Application.csproj" />
+    <Folder Include="Middleware\" />
+    <Folder Include="Filters\" />
   </ItemGroup>
 
 </Project>
