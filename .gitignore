@@ -1,0 +1,85 @@
+# =========================
+# .NET / Visual Studio
+# =========================
+
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# Logs
+*.log
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# IIS Express
+.vs/
+iisexpress/
+
+# NuGet
+*.nupkg
+packages/
+!packages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Publish output
+publish/
+
+# =========================
+# Angular / Node.js
+# =========================
+
+node_modules/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+
+# Angular cache
+.angular/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files (optional)
+src/environments/environment*.ts
+
+# Package lock files (optional depending on team)
+# package-lock.json
+# yarn.lock
+
+# =========================
+# OS files
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Coverage / Testing
+# =========================
+
+coverage/
+*.coverage
+*.coveragexml
+
+# =========================
+# Misc
+# =========================
+
+.env
+.env.local
+.env.*.local
