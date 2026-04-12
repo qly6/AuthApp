@@ -4,6 +4,8 @@ using AuthApp.Application.Services;
 using Fido2NetLib;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using LoginRequest = AuthApp.Application.DTOs.LoginRequest;
 using RefreshRequest = AuthApp.Application.DTOs.RefreshRequest;
 
@@ -177,7 +179,7 @@ namespace AuthApp.Api.Controllers
         // =========================
         private Guid GetUserId()
         {
-            var userId = User.FindFirst("sub")?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userId))
                 throw new Exception("Invalid token");

@@ -49,7 +49,11 @@ namespace AuthApp.Persistence.Repositories
 
         public async Task<User?> GetByIdAsync(Guid id)
         {
-            return await _db.Users.FindAsync(id);
+            return await _db.Users
+                .Include(x => x.Password)
+                .Include(x => x.Mfa)
+                .Include(x => x.Passkeys)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public Task SaveChangesAsync()

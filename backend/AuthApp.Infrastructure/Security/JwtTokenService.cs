@@ -26,9 +26,9 @@ namespace AuthApp.Infrastructure.Security
 
             var claims = new[]
             {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+                 new Claim(JwtRegisteredClaimNames.NameId, userId.ToString()),
+                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+             };
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],

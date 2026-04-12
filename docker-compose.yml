@@ -1,0 +1,73 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: auth-postgres
+    restart: always
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend/AuthApp.Api
+      dockerfile: Dockerfile
+
+    container_name: auth-backend
+    restart: always
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+
+    environment:
+      ConnectionStrings__PostgreSQL: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+
+      Jwt__Key: ${JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE}
+
+      Fido__Domain: ${FIDO_DOMAIN}
+      Fido__Origin: ${FIDO_ORIGIN}
+
+      ASPNETCORE_URLS: "https://+:8443;http://+:8080"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: devpassword
+
+    volumes:
+      - ./certs:/https:ro
+
+  frontend:
+    build:
+      context: ./frontend/auth-app
+      dockerfile: Dockerfile
+
+    container_name: auth-frontend
+    restart: always
+
+    depends_on:
+      - backend
+
+    ports:
+      - "4200:80"
+
+volumes:
+  postgres_data:
