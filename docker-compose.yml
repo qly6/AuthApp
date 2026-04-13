@@ -37,6 +37,7 @@ services:
       - Fido__Origin=${FIDO_ORIGIN} 
     ports:
       - "5001:8080"
+      - "5002:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,22 +49,8 @@ services:
       start_period: 40s
     networks:
       - auth-network
-
-  # frontend:
-  #   build:
-  #     context: ./frontend/auth-app   # Path to Angular project (contains Dockerfile and nginx.conf)
-  #     dockerfile: Dockerfile
-  #   container_name: auth-frontend
-  #   restart: unless-stopped
-  #   ports:
-  #     - "4201:80"
-  #   environment:
-  #     API_URL: https://api.staging.example.com
-  #     FEATURE_FLAG: "true"
-  #   # depends_on:
-  #   #   - backend
-    # networks:
-    #   - auth-network
+    volumes:
+      - ./https:/https:ro
 
   frontend2:
     build:
@@ -72,7 +59,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      API_URL: https://backend:8080/api
+      API_URL: /api
     depends_on:
       - backend
     networks:

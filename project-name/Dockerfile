@@ -13,6 +13,9 @@ FROM nginx:alpine
 
 COPY --from=build /app/dist/project-name/browser/ /usr/share/nginx/html/
 
+# 🔥 ADD THIS
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/env.template.json /usr/share/nginx/html/assets/env.template.json
 

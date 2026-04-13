@@ -23,8 +23,14 @@ RUN dotnet publish -c Release -o /app/publish
 
 # Final runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+
 WORKDIR /app
 EXPOSE 8080
+EXPOSE 8081
+
+ENV ASPNETCORE_URLS=https://+:8081;http://+:8080
+ENV ASPNETCORE_Kestrel__Certificates__Default__Password=password123
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
 
 COPY --from=build /app/publish .
 
