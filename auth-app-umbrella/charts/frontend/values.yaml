@@ -1,0 +1,26 @@
+replicaCount: 1
+
+image:
+  repository: yourregistry/auth-frontend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+env:
+  API_URL: "/api"
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+nodeSelector: {}
+tolerations: {}
+affinity: {}

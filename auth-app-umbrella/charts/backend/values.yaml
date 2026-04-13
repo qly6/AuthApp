@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: yourregistry/auth-backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+env:
+  ASPNETCORE_ENVIRONMENT: Production
+
+jwt:
+  key: ""
+  issuer: ""
+  audience: ""
+
+fido:
+  domain: ""
+  origin: ""
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 40
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Global values sẽ được truyền từ umbrella (postgres host, user, db, password)
+# Ở đây ta dùng .Values.global.postgresHost...

@@ -1,0 +1,84 @@
+# Global settings (có thể truy cập từ mọi subchart qua .Values.global)
+global:
+  # Dùng chung cho việc kết nối giữa các service
+  postgresHost: "db-postgres"   # service name của db subchart
+  postgresPort: 5432
+  postgresUser: authuser
+  postgresDb: authdb
+  # Các thông tin khác dùng chung (ví dụ: image registry)
+  imageRegistry: ""
+
+db:
+  enabled: true
+  postgres:
+    image:
+      repository: postgres
+      tag: "16-alpine"
+    storage:
+      size: 10Gi
+    resources: {}
+    # password sẽ được set qua --set hoặc external secret
+    postgresPassword: "ChangeMe123!"
+
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: yourregistry/auth-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  env:
+    ASPNETCORE_ENVIRONMENT: Production
+  jwt:
+    key: ""
+    issuer: "https://your-auth-domain.com"
+    audience: "your-audience"
+  fido:
+    domain: "your-domain.com"
+    origin: "https://your-origin.com"
+  resources: {}
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 40
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 30
+
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: yourregistry/auth-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  env:
+    API_URL: "/api"
+  resources: {}
+
+# Ingress chung (tùy chọn)
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: auth.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+          port: 80
+        - path: /api
+          pathType: Prefix
+          service: backend
+          port: 8080
+  tls: []
