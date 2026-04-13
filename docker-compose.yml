@@ -61,6 +61,10 @@ services:
       - backend
     networks:
       - auth-network
+    environment:
+      API_URL: "http://backend:7223/api"
+      PRODUCTION: "true"
+
 
 volumes:
   postgres_data:

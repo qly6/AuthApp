@@ -1,4 +1,6 @@
+const browserWindow = typeof window !== 'undefined' ? window : {};
+
 export const environment = {
-  production: false,
-  apiUrl: 'https://localhost:7223/api'  // Adjust to your backend URL
+  apiUrl: (browserWindow as any).__env?.apiUrl || 'http://localhost:7223/api',
+  production: (browserWindow as any).__env?.production === 'true'
 };
