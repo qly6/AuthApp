@@ -5,7 +5,7 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { MfaSetupComponent } from './core/features/mfa-setup/mfa-setup.component';
 import { PasskeyManagerComponent } from './core/features/passkey-manager/passkey-manager.component';
 import { DashboardComponent } from './core/features/dashboard/dashboard.component';
-import { RegisterComponent } from './register/register.component';
+import { RegisterComponent } from './core/features/register/register.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },

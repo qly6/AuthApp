@@ -56,11 +56,23 @@ services:
     container_name: auth-frontend
     restart: unless-stopped
     ports:
-      - "4200:80"
-    depends_on:
-      - backend
+      - "4201:80"
+    environment:
+      API_URL: https://api.staging.example.com
+      FEATURE_FLAG: "true"
+    # depends_on:
+    #   - backend
     networks:
       - auth-network
+
+  frontend2:
+    build:
+      context: ./project-name   # Path to Angular project (contains Dockerfile and nginx.conf)
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      API_URL: https://cc.staging.example.com
 
 volumes:
   postgres_data:

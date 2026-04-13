@@ -1,0 +1,4 @@
+{
+  "apiUrl": "{{API_URL}}",
+  "featureFlag": "{{FEATURE_FLAG}}"
+}

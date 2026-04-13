@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing.module';
@@ -11,6 +11,11 @@ import { MfaSetupComponent } from './core/features/mfa-setup/mfa-setup.component
 import { PasskeyManagerComponent } from './core/features/passkey-manager/passkey-manager.component';
 import { DashboardComponent } from './core/features/dashboard/dashboard.component';
 import { RegisterComponent } from './core/features/register/register.component';
+import { ConfigService } from './core/services/config.service';
+
+export function initializeConfig(configService: ConfigService) {
+  return () => configService.loadConfig();
+}
 
 @NgModule({
   declarations: [
@@ -31,6 +36,12 @@ import { RegisterComponent } from './core/features/register/register.component';
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true
+    },
+		{
+      provide: APP_INITIALIZER,
+      useFactory: initializeConfig,
+      deps: [ConfigService],
       multi: true
     }
   ],

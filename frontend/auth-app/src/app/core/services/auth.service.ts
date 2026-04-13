@@ -18,11 +18,15 @@ import {
 	startRegistration,
 	startAuthentication
 } from '@simplewebauthn/browser';
+import { ConfigService } from './config.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
-	private readonly API = `${environment.apiUrl}/auth`;
+	private get API(): string {
+    return `${this.configService.getConfig().apiUrl}/auth`;
+  }
+
 	private readonly ACCESS_TOKEN_KEY = 'access_token';
 	private readonly REFRESH_TOKEN_KEY = 'refresh_token';
 
@@ -30,6 +34,7 @@ export class AuthService {
 	public currentUser$ = this.currentUserSubject.asObservable();
 
 	constructor(
+		private configService: ConfigService,
 		private http: HttpClient,
 		private router: Router,
 		@Inject(PLATFORM_ID) private platformId: Object
