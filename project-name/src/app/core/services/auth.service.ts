@@ -4,27 +4,16 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { EnvService } from '../../env.service';
+import { AuthResult, LoginRequest, RefreshRequest, RegisterRequest, VerifyMfaRequest } from '../models/auth.models';
+import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
-import {
-	RegisterRequest,
-	LoginRequest,
-	RefreshRequest,
-	VerifyMfaRequest,
-	AuthResult
-} from '../models/auth.models';
-
-import {
-	startRegistration,
-	startAuthentication
-} from '@simplewebauthn/browser';
-import { ConfigService } from './config.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
 	private get API(): string {
-    return `${this.configService.getConfig().apiUrl}/auth`;
+    return `${this.envService.apiUrl}/auth`;
   }
 
 	private readonly ACCESS_TOKEN_KEY = 'access_token';
@@ -34,9 +23,9 @@ export class AuthService {
 	public currentUser$ = this.currentUserSubject.asObservable();
 
 	constructor(
-		private configService: ConfigService,
 		private http: HttpClient,
 		private router: Router,
+		private envService: EnvService,
 		@Inject(PLATFORM_ID) private platformId: Object
 	) {
 		this.loadStoredUser();

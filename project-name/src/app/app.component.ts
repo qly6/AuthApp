@@ -1,18 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { EnvService } from './env.service';
+import { Component } from '@angular/core';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
+	selector: 'app-root',
+	templateUrl: './app.component.html',
 	standalone: false,
-  selector: 'app-root',
-  templateUrl: './app.component.html'
+	styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
-
-  apiUrl: string = '';
-
-  constructor(private env: EnvService) {}
-
-  ngOnInit(): void {
-    this.apiUrl = this.env.apiUrl;
-  }
+export class AppComponent {
+	title = 'auth-app';
+	constructor(public authService: AuthService) { }
 }
