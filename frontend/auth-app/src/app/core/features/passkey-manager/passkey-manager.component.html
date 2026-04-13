@@ -1,0 +1,23 @@
+<div class="passkey-container">
+
+  <h3>Passkeys</h3>
+
+  <!-- Button -->
+  <button
+    (click)="registerPasskey()"
+    [disabled]="registering"
+  >
+    {{ registering ? 'Registering...' : 'Register New Passkey' }}
+  </button>
+
+  <!-- Success message -->
+  <p *ngIf="success" style="color: green;">
+    Passkey added successfully!
+  </p>
+
+  <!-- Error message -->
+  <p *ngIf="error" style="color: red;">
+    {{ error }}
+  </p>
+
+</div>

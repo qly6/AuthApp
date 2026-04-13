@@ -1,0 +1,60 @@
+<div class="mfa-container">
+
+  <!-- QR Code Section -->
+  <div *ngIf="qrCodeUrl && !success">
+    <h2>Set up MFA</h2>
+    <p>Scan this QR code with your authenticator app:</p>
+
+    <img [src]="qrCodeUrl" alt="MFA QR Code" />
+  </div>
+
+  <!-- Loading fallback -->
+  <div *ngIf="!qrCodeUrl && !error && !success">
+    <p>Loading QR code...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" style="color: red;">
+    {{ error }}
+  </div>
+
+  <!-- Success -->
+  <div *ngIf="success" style="color: green;">
+    <h3>MFA enabled successfully 🎉</h3>
+  </div>
+
+  <!-- Verification Form -->
+  <form
+    *ngIf="!success && qrCodeUrl"
+    [formGroup]="verifyForm"
+    (ngSubmit)="verify()"
+  >
+
+    <label for="code">Enter 6-digit code</label>
+
+    <input
+      id="code"
+      type="text"
+      formControlName="code"
+      placeholder="123456"
+      maxlength="6"
+    />
+
+    <!-- Validation messages -->
+    <div *ngIf="verifyForm.get('code')?.touched && verifyForm.get('code')?.invalid">
+      <small *ngIf="verifyForm.get('code')?.errors?.['required']">
+        Code is required
+      </small>
+
+      <small *ngIf="verifyForm.get('code')?.errors?.['pattern']">
+        Code must be 6 digits
+      </small>
+    </div>
+
+    <button type="submit" [disabled]="verifyForm.invalid">
+      Verify MFA
+    </button>
+
+  </form>
+
+</div>

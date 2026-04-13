@@ -1,0 +1,12 @@
+<div *ngIf="user">
+  <h2>Welcome</h2>
+
+  <p><b>User ID:</b> {{ user.id }}</p>
+
+  <nav>
+    <a routerLink="/mfa-setup">Setup MFA</a>
+    <a routerLink="/passkeys">Manage Passkeys</a>
+
+    <button (click)="logout()">Logout</button>
+  </nav>
+</div>
