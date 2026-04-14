@@ -40,3 +40,7 @@ kubectl -n simpleauth create secret docker-registry ecr-secret \
   --docker-username=AWS \
   --docker-password=$(aws ecr get-login-password --region ap-southeast-1) \
   --dry-run=client -o yaml | kubectl apply -f -
+
+export GITHUB_REPO="qly6/AuthApp"
+export EKS_CLUSTER="retail-vti-do2508-de000159-quyen-eksdemo"
+./scripts/setup-gh-oidc.sh
