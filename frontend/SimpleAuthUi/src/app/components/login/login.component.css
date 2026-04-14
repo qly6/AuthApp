@@ -1,179 +1,99 @@
-/* Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", Tahoma, sans-serif;
-}
-
-/* Background */
+/* Nền full màn hình */
 .auth-container {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  padding: 20px;
+  background: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 /* Card */
 .auth-card {
-  background: #fff;
-  padding: 35px;
-  width: 380px;
+  background: #1e293b;
+  padding: 30px;
+  width: 100%;
+  max-width: 380px;
   border-radius: 16px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-  text-align: center;
-  animation: fadeIn 0.6s ease;
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  border: 1px solid #334155;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 
 /* Title */
 .auth-card h2 {
-  margin-bottom: 25px;
-  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #f1f5f9;
 }
 
 /* Form group */
 .form-group {
-  position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+}
+
+/* Label */
+label {
+  display: block;
+  margin-bottom: 5px;
+  color: #cbd5f5;
+  font-size: 14px;
 }
 
 /* Input */
-.form-group input {
+input {
   width: 100%;
-  padding: 12px 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  transition: 0.2s;
+}
+
+input:focus {
   outline: none;
-  transition: 0.3s;
-  font-size: 15px;
-}
-
-/* Focus effect */
-.form-group input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 8px rgba(102, 126, 234, 0.4);
-}
-
-/* Floating label effect */
-.form-group label {
-  position: absolute;
-  top: 50%;
-  left: 12px;
-  transform: translateY(-50%);
-  background: #fff;
-  padding: 0 5px;
-  color: #777;
-  font-size: 14px;
-  pointer-events: none;
-  transition: 0.3s;
-}
-
-/* Khi focus hoặc có chữ */
-.form-group input:focus + label,
-.form-group input:not(:placeholder-shown) + label {
-  top: -8px;
-  font-size: 12px;
-  color: #667eea;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56,189,248,0.2);
 }
 
 /* Button */
 button {
   width: 100%;
   padding: 12px;
-  background: #667eea;
+  margin-top: 10px;
   border: none;
   border-radius: 10px;
-  color: white;
-  font-size: 16px;
+  background: #38bdf8;
+  color: #0f172a;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.2s;
 }
 
-/* Hover + click */
 button:hover {
-  background: #5a67d8;
-  transform: translateY(-1px);
-}
-
-button:active {
-  transform: scale(0.98);
+  background: #0ea5e9;
 }
 
 /* Error */
 .error {
-  color: red;
+  margin-top: 10px;
+  color: #f87171;
   font-size: 14px;
-  margin-bottom: 10px;
-  text-align: left;
 }
 
-/* Link */
+/* Footer text */
 .auth-card p {
-  margin-top: 18px;
+  margin-top: 15px;
+  text-align: center;
   font-size: 14px;
+  color: #94a3b8;
 }
 
 .auth-card a {
-  color: #667eea;
+  color: #38bdf8;
   text-decoration: none;
-  font-weight: 500;
 }
 
 .auth-card a:hover {
   text-decoration: underline;
-}
-
-/* ===== RESPONSIVE ===== */
-
-/* Tablet */
-@media (max-width: 768px) {
-  .auth-card {
-    width: 90%;
-    padding: 30px;
-  }
-
-  .auth-card h2 {
-    font-size: 22px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .auth-card {
-    width: 100%;
-    padding: 25px;
-    border-radius: 12px;
-  }
-
-  .form-group input {
-    padding: 10px;
-    font-size: 14px;
-  }
-
-  button {
-    padding: 10px;
-    font-size: 15px;
-  }
-
-  .auth-card h2 {
-    font-size: 20px;
-  }
-
-  .auth-card p {
-    font-size: 13px;
-  }
 }
