@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: simpleauth_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-MySecretPassword123!}
+      POSTGRES_DB: ${POSTGRES_DB:-SimpleAuthDb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - simpleauth_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./SimpleAuthApi
+      dockerfile: Dockerfile
+    container_name: simpleauth_api
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-SimpleAuthDb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-MySecretPassword123!}
+      - Jwt__Key=${JWT_SECRET_KEY:-ThisIsASecretKeyForDevelopmentPurposesOnly12345!}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+    ports:
+      - "5000:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - simpleauth_network
+    restart: on-failure
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  simpleauth_network:
+    driver: bridge
