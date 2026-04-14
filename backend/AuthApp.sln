@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/tests/" />
-  <Project Path="AuthApp.Api/AuthApp.Api.csproj" />
-  <Project Path="AuthApp.Application/AuthApp.Application.csproj" />
-  <Project Path="AuthApp.Domain/AuthApp.Domain.csproj" />
-  <Project Path="AuthApp.Infrastructure/AuthApp.Infrastructure.csproj" />
-  <Project Path="AuthApp.Persistence/AuthApp.Persistence.csproj" />
-</Solution>
