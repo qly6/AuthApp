@@ -2,23 +2,18 @@ helm uninstall simpleauth -n simpleauth
 
 kubectl -n simpleauth delete secret ecr-secret --ignore-not-found
 
+# Đảm bảo đã tạo secret ecr-secret (chạy 1 lần duy nhất)
+kubectl create namespace simpleauth --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n simpleauth create secret docker-registry ecr-secret \
   --docker-server=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com \
   --docker-username=AWS \
-  --docker-password=$(aws ecr get-login-password --region ap-southeast-1)
+  --docker-password=$(aws ecr get-login-password --region ap-southeast-1) \
+  --dry-run=client -o yaml | kubectl apply -f -
 
-helm install simpleauth . -n simpleauth \
-  --set ingress.enabled=true \
-  --set ingress.className=alb \
-  --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"=internet-facing \
-  --set ingress.annotations."alb\.ingress\.kubernetes\.io/target-type"=ip \
-  --set ingress.annotations."alb\.ingress\.kubernetes\.io/listen-ports"='[{"HTTP": 80}]' \
-  --set ingress.hosts[0].host="" \
-  --set ingress.hosts[0].paths[0].path="/" \
-  --set ingress.hosts[0].paths[0].pathType="Prefix" \
-  --set ingress.hosts[0].paths[0].serviceName="simpleauth-ui" \
-  --set ingress.hosts[0].paths[0].servicePort=80 \
-  --set ingress.hosts[0].paths[1].path="/api" \
-  --set ingress.hosts[0].paths[1].pathType="Prefix" \
-  --set ingress.hosts[0].paths[1].serviceName="simpleauth-api" \
-  --set ingress.hosts[0].paths[1].servicePort=80
+# Cài đặt Helm (không cần thêm bất kỳ --set nào)
+cd simpleauth-chart
+helm dependency update
+helm install simpleauth . -n simpleauth
+
+kubectl -n simpleauth get pods -w
+kubectl -n simpleauth get ingress -w
