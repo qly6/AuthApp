@@ -1,0 +1,18 @@
+apiVersion: v2
+name: simpleauth
+description: SimpleAuth application with API, UI, PostgreSQL and Ingress
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: api
+    version: 1.0.0
+    repository: "file://charts/api"
+  - name: ui
+    version: 1.0.0
+    repository: "file://charts/ui"
+  - name: postgresql
+    version: 15.5.20
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled

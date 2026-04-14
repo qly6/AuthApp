@@ -1,0 +1,19 @@
+helm uninstall simpleauth -n simpleauth
+
+kubectl -n simpleauth delete secret ecr-secret --ignore-not-found
+
+# Đảm bảo đã tạo secret ecr-secret (chạy 1 lần duy nhất)
+kubectl create namespace simpleauth --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n simpleauth create secret docker-registry ecr-secret \
+  --docker-server=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password=$(aws ecr get-login-password --region ap-southeast-1) \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# Cài đặt Helm (không cần thêm bất kỳ --set nào)
+cd simpleauth-chart
+helm dependency update
+helm install simpleauth . -n simpleauth
+
+kubectl -n simpleauth get pods -w
+kubectl -n simpleauth get ingress -w

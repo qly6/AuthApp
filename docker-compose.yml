@@ -3,72 +3,60 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: auth-postgres
-    restart: unless-stopped
+    container_name: simpleauth_postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-authuser}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe123!}
-      POSTGRES_DB: ${POSTGRES_DB:-authdb}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-MySecretPassword123!}
+      POSTGRES_DB: ${POSTGRES_DB:-SimpleAuthDb}
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - simpleauth_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-authuser} -d ${POSTGRES_DB:-authdb}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - auth-network
 
-  backend:
+  api:
     build:
-      context: ./backend   # Path to solution root (contains AuthApp.sln and Dockerfile)
+      context: ./SimpleAuthApi/SimpleAuthApi
       dockerfile: Dockerfile
-    container_name: auth-api
-    restart: unless-stopped
+    container_name: simpleauth_api
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=${POSTGRES_DB:-authdb};Username=${POSTGRES_USER:-authuser};Password=${POSTGRES_PASSWORD:-ChangeMe123!}
-      - Jwt__Key=${JWT_KEY}
-      - Jwt__Issuer=${JWT_ISSUER}
-      - Jwt__Audience=${JWT_AUDIENCE}
-      - Fido__Domain=${FIDO_DOMAIN}
-      - Fido__Origin=${FIDO_ORIGIN} 
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-SimpleAuthDb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-MySecretPassword123!}
+      - Jwt__Key=${JWT_SECRET_KEY:-ThisIsASecretKeyForDevelopmentPurposesOnly12345!}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - DOTNET_RUNNING_IN_CONTAINER=true
     ports:
-      - "5001:8080"
-      - "5002:8081"
+      - "5000:80"
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
-      - auth-network
-    volumes:
-      - ./https:/https:ro
+      - simpleauth_network
+    restart: on-failure
 
-  frontend2:
+  ui:
     build:
-      context: ./project-name   # Path to Angular project (contains Dockerfile and nginx.conf)
+      context: ./simple-auth-ui
       dockerfile: Dockerfile
-    ports:
-      - "8080:80"
+    container_name: simpleauth_ui
     environment:
-      API_URL: /api
+      - API_URL=http://localhost:5000
+    ports:
+      - "4200:80"
     depends_on:
-      - backend
+      - api
     networks:
-      - auth-network
+      - simpleauth_network
 
 volumes:
   postgres_data:
     driver: local
 
 networks:
-  auth-network:
+  simpleauth_network:
     driver: bridge

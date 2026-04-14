@@ -1,0 +1,17 @@
+replicaCount: 2
+image:
+  repository: simpleauth-api
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+resources: {}
+jwtSecret: ""
+database:
+  host: ""
+  port: 5432
+  name: ""
+  username: ""
+  password: ""
+imagePullSecrets: []

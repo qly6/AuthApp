@@ -1,0 +1,95 @@
+global:
+  environment: dev
+
+# PostgreSQL subchart
+postgresql:
+  enabled: true
+  auth:
+    database: simpleauthdb
+    username: postgres
+    password: "StrongDBPassword123"
+  primary:
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  image:
+    registry: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com
+    repository: postgresql
+    tag: latest
+  imagePullSecrets:
+    - name: ecr-secret
+
+# API subchart
+api:
+  replicaCount: 2
+  image:
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-api
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  jwtSecret: "your-strong-secret-at-least-32-characters-long"
+  database:
+    host: "simpleauth-postgresql"
+    port: 5432
+    name: "simpleauthdb"
+    username: "postgres"
+    password: "StrongDBPassword123"   # Dùng trực tiếp thay vì secret để tránh lỗi
+  imagePullSecrets:
+    - name: ecr-secret
+
+# UI subchart
+ui:
+  replicaCount: 2
+  image:
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-ui
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  apiUrl: "/api"
+  imagePullSecrets:
+    - name: ecr-secret
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /index.html
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: simpleauth-ui
+          servicePort: 80
+        - path: /api
+          pathType: Prefix
+          serviceName: simpleauth-api
+          servicePort: 80
