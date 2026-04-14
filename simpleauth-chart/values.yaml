@@ -1,0 +1,62 @@
+global:
+  environment: dev
+
+postgresql:
+  enabled: true
+  auth:
+    database: simpleauthdb
+    username: postgres
+    password: ""  # Set via --set or secret
+  primary:
+    persistence:
+      size: 8Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  service:
+    type: ClusterIP
+
+api:
+  replicaCount: 2
+  image:
+    repository: simpleauth-api
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  jwtSecret: "change-me-in-production"
+  database:
+    host: "simpleauth-postgresql"
+    port: 5432
+    name: simpleauthdb
+    username: postgres
+
+ui:
+  replicaCount: 2
+  image:
+    repository: simpleauth-ui
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: LoadBalancer
+    port: 80
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  apiUrl: "http://simpleauth-api:80/api"

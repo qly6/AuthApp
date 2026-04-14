@@ -67,3 +67,22 @@ Generated_Code/
 # Others
 *.cache
 *.tmp
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# Terraform variable files (often contain secrets)
+*.tfvars
+*.tfvars.json
+
+# CLI config files
+terraform.rc
+.terraformrc
