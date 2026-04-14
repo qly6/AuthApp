@@ -6,7 +6,7 @@ namespace SimpleAuthApi.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
         [HttpGet("profile")]

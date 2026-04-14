@@ -6,7 +6,7 @@ postgresql:
   auth:
     database: simpleauthdb
     username: postgres
-    password: ""  # Set via --set or secret
+    password: ""
   primary:
     persistence:
       size: 8Gi
@@ -50,7 +50,7 @@ ui:
     tag: latest
     pullPolicy: Always
   service:
-    type: LoadBalancer
+    type: ClusterIP
     port: 80
   resources:
     limits:
@@ -60,3 +60,22 @@ ui:
       cpu: 100m
       memory: 128Mi
   apiUrl: "http://simpleauth-api:80/api"
+
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: simpleauth-ui
+          servicePort: 80
+        - path: /api
+          pathType: Prefix
+          serviceName: simpleauth-api
+          servicePort: 80

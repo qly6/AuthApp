@@ -4,19 +4,20 @@ set -e
 CHART_NAME="simpleauth"
 CHART_DIR="./${CHART_NAME}-chart"
 
-echo "🚀 Tạo Umbrella Helm Chart (có PostgreSQL) tại: $CHART_DIR"
+echo "🚀 Tạo Umbrella Helm Chart (có PostgreSQL + Ingress) tại: $CHART_DIR"
 
-# Tạo thư mục gốc
-mkdir -p "$CHART_DIR"/charts/{api,ui}/templates
-mkdir -p "$CHART_DIR"/templates
+# Tạo thư mục
+mkdir -p "$CHART_DIR"/{charts/{api,ui}/templates,templates}
 
-# Parent Chart.yaml với dependency PostgreSQL
+# ------------------------------------------------------------------------
+# Parent Chart
+# ------------------------------------------------------------------------
 cat > "$CHART_DIR/Chart.yaml" <<EOF
 apiVersion: v2
 name: $CHART_NAME
-description: Umbrella chart for SimpleAuth application (API + UI + PostgreSQL)
+description: Umbrella chart for SimpleAuth application (API + UI + PostgreSQL + Ingress)
 type: application
-version: 0.2.0
+version: 0.3.0
 appVersion: "1.0.0"
 
 dependencies:
@@ -32,7 +33,6 @@ dependencies:
     condition: postgresql.enabled
 EOF
 
-# Parent values.yaml
 cat > "$CHART_DIR/values.yaml" <<'EOF'
 global:
   environment: dev
@@ -42,7 +42,7 @@ postgresql:
   auth:
     database: simpleauthdb
     username: postgres
-    password: ""  # Set via --set or secret
+    password: ""
   primary:
     persistence:
       size: 8Gi
@@ -86,7 +86,7 @@ ui:
     tag: latest
     pullPolicy: Always
   service:
-    type: LoadBalancer
+    type: ClusterIP
     port: 80
   resources:
     limits:
@@ -96,9 +96,71 @@ ui:
       cpu: 100m
       memory: 128Mi
   apiUrl: "http://simpleauth-api:80/api"
+
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: simpleauth-ui
+          servicePort: 80
+        - path: /api
+          pathType: Prefix
+          serviceName: simpleauth-api
+          servicePort: 80
 EOF
 
-# Tạo API subchart (tương tự nhưng cập nhật deployment)
+# Parent _helpers.tpl
+cat > "$CHART_DIR/templates/_helpers.tpl" <<'EOF'
+{{- define "simpleauth.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: {{ .Chart.AppVersion }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+EOF
+
+# Ingress template
+cat > "$CHART_DIR/templates/ingress.yaml" <<'EOF'
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-ingress
+  labels:
+    {{- include "simpleauth.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+  {{- range .Values.ingress.hosts }}
+  - host: {{ .host | quote }}
+    http:
+      paths:
+      {{- range .paths }}
+      - path: {{ .path }}
+        pathType: {{ .pathType }}
+        backend:
+          service:
+            name: {{ .serviceName }}
+            port:
+              number: {{ .servicePort }}
+      {{- end }}
+  {{- end }}
+{{- end }}
+EOF
+
+# ------------------------------------------------------------------------
+# API Subchart (giữ nguyên)
+# ------------------------------------------------------------------------
 API_DIR="$CHART_DIR/charts/api"
 
 cat > "$API_DIR/Chart.yaml" <<EOF
@@ -128,7 +190,6 @@ database:
   username: ""
 EOF
 
-# API _helpers.tpl
 cat > "$API_DIR/templates/_helpers.tpl" <<'EOF'
 {{- define "api.fullname" -}}
 {{- printf "simpleauth-api" -}}
@@ -147,7 +208,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 EOF
 
-# API deployment (dùng secret cho password)
 cat > "$API_DIR/templates/deployment.yaml" <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
@@ -187,7 +247,6 @@ spec:
           {{- toYaml .Values.resources | nindent 10 }}
 EOF
 
-# API service
 cat > "$API_DIR/templates/service.yaml" <<'EOF'
 apiVersion: v1
 kind: Service
@@ -204,7 +263,9 @@ spec:
     {{- include "api.selectorLabels" . | nindent 4 }}
 EOF
 
-# UI subchart (giữ nguyên)
+# ------------------------------------------------------------------------
+# UI Subchart (giữ nguyên, service type ClusterIP)
+# ------------------------------------------------------------------------
 UI_DIR="$CHART_DIR/charts/ui"
 
 cat > "$UI_DIR/Chart.yaml" <<EOF
@@ -223,13 +284,12 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 service:
-  type: LoadBalancer
+  type: ClusterIP
   port: 80
 resources: {}
 apiUrl: "http://simpleauth-api:80/api"
 EOF
 
-# UI helpers
 cat > "$UI_DIR/templates/_helpers.tpl" <<'EOF'
 {{- define "ui.fullname" -}}
 {{- printf "simpleauth-ui" -}}
@@ -248,7 +308,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 EOF
 
-# UI configmap
 cat > "$UI_DIR/templates/configmap.yaml" <<'EOF'
 apiVersion: v1
 kind: ConfigMap
@@ -264,7 +323,6 @@ data:
     })(this);
 EOF
 
-# UI deployment
 cat > "$UI_DIR/templates/deployment.yaml" <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
@@ -298,7 +356,6 @@ spec:
           name: {{ include "ui.fullname" . }}-config
 EOF
 
-# UI service
 cat > "$UI_DIR/templates/service.yaml" <<'EOF'
 apiVersion: v1
 kind: Service
@@ -315,11 +372,16 @@ spec:
     {{- include "ui.selectorLabels" . | nindent 4 }}
 EOF
 
-echo "✅ Umbrella Chart (với PostgreSQL) đã được tạo tại: $CHART_DIR"
+echo "✅ Umbrella Chart (với PostgreSQL + Ingress) đã được tạo tại: $CHART_DIR"
 echo ""
 echo "📦 Tiếp theo:"
 echo "1. cd $CHART_DIR"
 echo "2. helm dependency update"
-echo "3. helm upgrade --install simpleauth . --namespace simpleauth --create-namespace \\"
+echo "3. Cài đặt AWS Load Balancer Controller nếu chưa có:"
+echo "   https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html"
+echo "4. helm upgrade --install simpleauth . --namespace simpleauth --create-namespace \\"
 echo "     --set postgresql.auth.password=<your-password> \\"
 echo "     --set api.jwtSecret=<your-jwt-secret>"
+echo ""
+echo "Sau khi cài đặt, truy cập ứng dụng qua ALB DNS:"
+echo "  kubectl -n simpleauth get ingress"

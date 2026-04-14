@@ -1,0 +1,25 @@
+cd simpleauth-chart
+helm dependency update
+helm upgrade --install simpleauth . \
+  --namespace simpleauth --create-namespace \
+  --set postgresql.auth.password=StrongPassword123 \
+  --set api.jwtSecret=YourSuperSecretKeyAtLeast32Characters
+
+kubectl -n simpleauth get pods,svc,pvc
+
+helm install simpleauth . \
+  --namespace simpleauth \
+  --set api.image.repository=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-api \
+  --set ui.image.repository=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-ui \
+  --set ui.apiUrl="/api" \
+  --set postgresql.auth.password=StrongDBPassword123 \
+  --set api.jwtSecret="your-strong-secret-at-least-32-characters-long" \
+  --set api.imagePullSecrets[0].name=ecr-secret \
+  --set ui.imagePullSecrets[0].name=ecr-secret \
+  --set postgresql.primary.persistence.enabled=false \
+  --set postgresql.image.registry=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com \
+  --set postgresql.image.repository=postgresql \
+  --set postgresql.image.tag=latest \
+  --set postgresql.imagePullSecrets[0].name=ecr-secret
+	
+	helm uninstall simpleauth -n simpleauth

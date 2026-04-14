@@ -1,0 +1,16 @@
+api:
+  image:
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-api:latest
+    tag: latest
+    pullPolicy: Always
+  jwtSecret: "your-super-secret-key-at-least-32-characters"
+
+ui:
+  image:
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-ui:latest
+    tag: latest
+    pullPolicy: Always
+
+postgresql:
+  auth:
+    password: "StrongDBPassword123"

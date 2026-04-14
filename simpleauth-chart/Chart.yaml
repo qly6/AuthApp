@@ -1,8 +1,8 @@
 apiVersion: v2
 name: simpleauth
-description: Umbrella chart for SimpleAuth application (API + UI + PostgreSQL)
+description: Umbrella chart for SimpleAuth application (API + UI + PostgreSQL + Ingress)
 type: application
-version: 0.2.0
+version: 0.3.0
 appVersion: "1.0.0"
 
 dependencies:
@@ -14,5 +14,5 @@ dependencies:
     repository: "file://charts/ui"
   - name: postgresql
     version: 15.5.20
-    repository: https://charts.bitnami.com/bitnami
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/postgresql:latest
     condition: postgresql.enabled
