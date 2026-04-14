@@ -6,5 +6,6 @@ namespace SimpleAuthApi.Services
     {
         Task<UserResponseDto?> RegisterAsync(RegisterDto registerDto);
         Task<UserResponseDto?> LoginAsync(LoginDto loginDto);
+        Task<UserResponseDto> VerifyMfaAsync(VerifyMfaRequest request);
     }
 }

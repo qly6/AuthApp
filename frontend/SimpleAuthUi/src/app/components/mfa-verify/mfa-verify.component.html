@@ -1,0 +1,35 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">Two-Factor Authentication</h2>
+          <p class="text-muted">Enter the 6-digit code from your authenticator app.</p>
+          
+          <div class="mb-3">
+            <label for="mfa-code" class="form-label">Verification Code</label>
+            <input
+              id="mfa-code"
+              name="mfaCode"
+              type="text"
+              class="form-control form-control-lg text-center"
+              [(ngModel)]="code"
+              placeholder="000000"
+              maxlength="6"
+              autocomplete="off"
+              autofocus
+            />
+          </div>
+
+          <button class="btn btn-primary w-100" (click)="verify()" [disabled]="code.length !== 6">
+            Verify
+          </button>
+
+          <div *ngIf="error" class="alert alert-danger mt-3">
+            {{ error }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

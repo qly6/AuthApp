@@ -17,7 +17,7 @@ export class LoginComponent {
 
   onSubmit(): void {
     this.authService.login(this.username, this.password).subscribe({
-      next: () => this.router.navigate(['/']),
+      // next: () => this.router.navigate(['/']),
       error: () => this.error = 'Tên đăng nhập hoặc mật khẩu không đúng'
     });
   }

@@ -1,0 +1,92 @@
+<div class="container mt-4">
+	<!-- Nút Back to Home -->
+	<div class="mb-3">
+		<a routerLink="/home" class="btn btn-outline-secondary">
+			← Back to Home
+		</a>
+	</div>
+
+	<div class="container mt-4">
+		<h3>Two-Factor Authentication</h3>
+		<p class="text-muted">Add an extra layer of security to your account.</p>
+
+		<!-- Loading state -->
+		<div *ngIf="loading" class="text-center py-5">
+			<div class="spinner-border text-primary" role="status">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+
+		<!-- Main content -->
+		<div *ngIf="!loading">
+			<!-- Existing methods list -->
+			<div class="mb-4">
+				<h5>Your Authentication Methods</h5>
+				<div *ngIf="methods.length === 0" class="alert alert-info">
+					No MFA methods configured yet.
+				</div>
+				<ul class="list-group" *ngIf="methods.length > 0">
+					<li *ngFor="let m of methods" class="list-group-item d-flex justify-content-between align-items-center">
+						<div>
+							<span class="fw-bold">{{ m.type | uppercase }}</span>
+							<span class="badge ms-2" [class.bg-success]="m.isEnabled" [class.bg-secondary]="!m.isEnabled">
+								{{ m.isEnabled ? 'Enabled' : 'Pending' }}
+							</span>
+							<br />
+							<small class="text-muted">Added {{ m.createdAt | date:'medium' }}</small>
+						</div>
+						<button *ngIf="m.isEnabled" class="btn btn-sm btn-outline-danger" (click)="disableMethod(m.id)">
+							Disable
+						</button>
+					</li>
+				</ul>
+			</div>
+
+			<!-- Add TOTP button -->
+			<button *ngIf="!showSetup && !hasEnabledTotp" class="btn btn-primary" (click)="startTotpSetup()">
+				+ Add Authenticator App (TOTP)
+			</button>
+
+			<!-- TOTP Setup panel -->
+			<div *ngIf="showSetup" class="card mt-3">
+				<div class="card-header">
+					<h5 class="mb-0">Setup Authenticator App</h5>
+				</div>
+				<div class="card-body">
+					<p>Scan the QR code with Google Authenticator, Microsoft Authenticator, or a similar app.</p>
+
+					<div class="text-center mb-3">
+						<img *ngIf="qrCodeDataUrl" [src]="qrCodeDataUrl" alt="QR Code for TOTP setup"
+							class="qr-code img-thumbnail" />
+						<div *ngIf="!qrCodeDataUrl" class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Generating QR...</span>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<label for="manual-secret" class="form-label">Manual entry secret</label>
+						<div class="input-group">
+							<input id="manual-secret" type="text" class="form-control font-monospace" [value]="setupSecret"
+								readonly />
+							<button class="btn btn-outline-secondary" type="button" (click)="copySecret()">Copy</button>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<label for="setup-code" class="form-label">Enter the 6-digit code from your app</label>
+						<input id="setup-code" name="setupCode" type="text" class="form-control" [(ngModel)]="setupCode"
+							placeholder="000000" maxlength="6" autocomplete="off" />
+					</div>
+
+					<div *ngIf="setupError" class="alert alert-danger">{{ setupError }}</div>
+
+					<div class="d-flex gap-2">
+						<button class="btn btn-success" (click)="verifySetup()" [disabled]="setupCode.length !== 6">
+							Verify & Enable
+						</button>
+						<button class="btn btn-link" (click)="cancelSetup()">Cancel</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>

@@ -1,10 +1,32 @@
-<div class="home-container">
-  <header>
-    <h1>Chào mừng, {{ user?.username }}!</h1>
-    <button (click)="logout()">Đăng xuất</button>
-  </header>
-  <main>
-    <p>Email: {{ user?.email }}</p>
-    <p>Bạn đã đăng nhập thành công.</p>
-  </main>
+<div class="container mt-4">
+	<div class="d-flex justify-content-between align-items-center mb-4">
+		<h1>Welcome, {{ user?.username }}!</h1>
+		<div>
+			<a routerLink="/profile/mfa" class="btn btn-outline-primary me-2">
+				Manage MFA
+			</a>
+			<button class="btn btn-outline-danger" (click)="logout()">Logout</button>
+		</div>
+	</div>
+
+	<div class="card">
+		<div class="card-body">
+			<h5 class="card-title">Security Status</h5>
+
+			<div *ngIf="loadingMfa" class="text-muted">Checking MFA status...</div>
+
+			<div *ngIf="!loadingMfa">
+				<p *ngIf="mfaEnabled" class="text-success">
+					✅ Two-factor authentication is <strong>enabled</strong> on your account.
+				</p>
+				<p *ngIf="!mfaEnabled" class="text-warning">
+					⚠️ Two-factor authentication is <strong>not enabled</strong>.
+					<a routerLink="/profile/mfa">Click here to set it up</a> for added security.
+				</p>
+			</div>
+
+			<hr />
+			<p class="card-text">This is your secure dashboard. You have successfully authenticated.</p>
+		</div>
+	</div>
 </div>

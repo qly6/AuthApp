@@ -1,0 +1,58 @@
+.qr-code {
+  max-width: 256px;
+  height: auto;
+  border: 2px solid #dee2e6;
+  padding: 12px;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.font-monospace {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  letter-spacing: 1px;
+}
+
+.method-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 4px 8px;
+}
+
+.list-group-item {
+  border-left: none;
+  border-right: none;
+  border-radius: 0 !important;
+}
+
+.list-group-item:first-child {
+  border-top: none;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+.setup-card {
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.setup-card .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 12px 12px 0 0;
+}
+
+.copy-btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Spinner size adjustment */
+.spinner-border {
+  width: 2rem;
+  height: 2rem;
+}

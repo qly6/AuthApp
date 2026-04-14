@@ -44,5 +44,13 @@ namespace SimpleAuthApi.Controllers
             // Ở đây chỉ trả về thông báo thành công.
             return Ok(new { message = "Đăng xuất thành công. Vui lòng xóa token ở phía client." });
         }
+
+        [HttpPost("verify-mfa")]
+        public async Task<IActionResult> VerifyMfa([FromBody] VerifyMfaRequest request)
+        {
+            var response = await _authService.VerifyMfaAsync(request);
+            return Ok(response);
+        }
+
     }
 }
