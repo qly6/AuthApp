@@ -4,28 +4,27 @@ set -e
 CHART_NAME="simpleauth"
 CHART_DIR="./${CHART_NAME}-chart"
 
-echo "🚀 Tạo Umbrella Helm Chart (có PostgreSQL + Ingress) tại: $CHART_DIR"
-
-# Tạo thư mục
+echo "🚀 Tạo Helm Umbrella Chart mới tại: $CHART_DIR"
+rm -rf "$CHART_DIR"
 mkdir -p "$CHART_DIR"/{charts/{api,ui}/templates,templates}
 
 # ------------------------------------------------------------------------
-# Parent Chart
+# Parent Chart.yaml
 # ------------------------------------------------------------------------
 cat > "$CHART_DIR/Chart.yaml" <<EOF
 apiVersion: v2
 name: $CHART_NAME
-description: Umbrella chart for SimpleAuth application (API + UI + PostgreSQL + Ingress)
+description: SimpleAuth application with API, UI, PostgreSQL and Ingress
 type: application
-version: 0.3.0
+version: 1.0.0
 appVersion: "1.0.0"
 
 dependencies:
   - name: api
-    version: 0.1.0
+    version: 1.0.0
     repository: "file://charts/api"
   - name: ui
-    version: 0.1.0
+    version: 1.0.0
     repository: "file://charts/ui"
   - name: postgresql
     version: 15.5.20
@@ -33,19 +32,23 @@ dependencies:
     condition: postgresql.enabled
 EOF
 
+# ------------------------------------------------------------------------
+# Parent values.yaml (đã sửa tất cả cấu hình)
+# ------------------------------------------------------------------------
 cat > "$CHART_DIR/values.yaml" <<'EOF'
 global:
   environment: dev
 
+# PostgreSQL subchart
 postgresql:
   enabled: true
   auth:
     database: simpleauthdb
     username: postgres
-    password: ""
+    password: "StrongDBPassword123"
   primary:
     persistence:
-      size: 8Gi
+      enabled: false
     resources:
       limits:
         cpu: 500m
@@ -53,13 +56,18 @@ postgresql:
       requests:
         cpu: 250m
         memory: 256Mi
-  service:
-    type: ClusterIP
+  image:
+    registry: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com
+    repository: postgresql
+    tag: latest
+  imagePullSecrets:
+    - name: ecr-secret
 
+# API subchart
 api:
   replicaCount: 2
   image:
-    repository: simpleauth-api
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-api
     tag: latest
     pullPolicy: Always
   service:
@@ -72,17 +80,21 @@ api:
     requests:
       cpu: 250m
       memory: 256Mi
-  jwtSecret: "change-me-in-production"
+  jwtSecret: "your-strong-secret-at-least-32-characters-long"
   database:
     host: "simpleauth-postgresql"
     port: 5432
-    name: simpleauthdb
-    username: postgres
+    name: "simpleauthdb"
+    username: "postgres"
+    password: "StrongDBPassword123"   # Dùng trực tiếp thay vì secret để tránh lỗi
+  imagePullSecrets:
+    - name: ecr-secret
 
+# UI subchart
 ui:
   replicaCount: 2
   image:
-    repository: simpleauth-ui
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-ui
     tag: latest
     pullPolicy: Always
   service:
@@ -95,8 +107,11 @@ ui:
     requests:
       cpu: 100m
       memory: 128Mi
-  apiUrl: "http://simpleauth-api:80/api"
+  apiUrl: "/api"
+  imagePullSecrets:
+    - name: ecr-secret
 
+# Ingress configuration
 ingress:
   enabled: true
   className: "alb"
@@ -104,6 +119,7 @@ ingress:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /index.html
   hosts:
     - host: ""
       paths:
@@ -159,16 +175,17 @@ spec:
 EOF
 
 # ------------------------------------------------------------------------
-# API Subchart (giữ nguyên)
+# API Subchart
 # ------------------------------------------------------------------------
 API_DIR="$CHART_DIR/charts/api"
+mkdir -p "$API_DIR/templates"
 
 cat > "$API_DIR/Chart.yaml" <<EOF
 apiVersion: v2
 name: api
 description: .NET API for SimpleAuth
 type: application
-version: 0.1.0
+version: 1.0.0
 appVersion: "1.0.0"
 EOF
 
@@ -188,8 +205,11 @@ database:
   port: 5432
   name: ""
   username: ""
+  password: ""
+imagePullSecrets: []
 EOF
 
+# API helpers
 cat > "$API_DIR/templates/_helpers.tpl" <<'EOF'
 {{- define "api.fullname" -}}
 {{- printf "simpleauth-api" -}}
@@ -208,6 +228,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 EOF
 
+# API deployment (sửa: dùng password từ values thay vì secret)
 cat > "$API_DIR/templates/deployment.yaml" <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
@@ -225,6 +246,10 @@ spec:
       labels:
         {{- include "api.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -237,16 +262,12 @@ spec:
         - name: Jwt__Key
           value: {{ .Values.jwtSecret | quote }}
         - name: ConnectionStrings__DefaultConnection
-          value: "Host={{ .Values.database.host }};Port={{ .Values.database.port }};Database={{ .Values.database.name }};Username={{ .Values.database.username }};Password=$(DB_PASSWORD)"
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Release.Name }}-postgresql
-              key: password
+          value: "Host={{ .Values.database.host }};Port={{ .Values.database.port }};Database={{ .Values.database.name }};Username={{ .Values.database.username }};Password={{ .Values.database.password }}"
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
 EOF
 
+# API service
 cat > "$API_DIR/templates/service.yaml" <<'EOF'
 apiVersion: v1
 kind: Service
@@ -264,16 +285,17 @@ spec:
 EOF
 
 # ------------------------------------------------------------------------
-# UI Subchart (giữ nguyên, service type ClusterIP)
+# UI Subchart
 # ------------------------------------------------------------------------
 UI_DIR="$CHART_DIR/charts/ui"
+mkdir -p "$UI_DIR/templates"
 
 cat > "$UI_DIR/Chart.yaml" <<EOF
 apiVersion: v2
 name: ui
 description: Angular UI for SimpleAuth
 type: application
-version: 0.1.0
+version: 1.0.0
 appVersion: "1.0.0"
 EOF
 
@@ -287,9 +309,11 @@ service:
   type: ClusterIP
   port: 80
 resources: {}
-apiUrl: "http://simpleauth-api:80/api"
+apiUrl: "/api"
+imagePullSecrets: []
 EOF
 
+# UI helpers
 cat > "$UI_DIR/templates/_helpers.tpl" <<'EOF'
 {{- define "ui.fullname" -}}
 {{- printf "simpleauth-ui" -}}
@@ -308,6 +332,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 EOF
 
+# UI configmap
 cat > "$UI_DIR/templates/configmap.yaml" <<'EOF'
 apiVersion: v1
 kind: ConfigMap
@@ -323,6 +348,7 @@ data:
     })(this);
 EOF
 
+# UI deployment
 cat > "$UI_DIR/templates/deployment.yaml" <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
@@ -340,6 +366,10 @@ spec:
       labels:
         {{- include "ui.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -356,6 +386,7 @@ spec:
           name: {{ include "ui.fullname" . }}-config
 EOF
 
+# UI service
 cat > "$UI_DIR/templates/service.yaml" <<'EOF'
 apiVersion: v1
 kind: Service
@@ -372,16 +403,11 @@ spec:
     {{- include "ui.selectorLabels" . | nindent 4 }}
 EOF
 
-echo "✅ Umbrella Chart (với PostgreSQL + Ingress) đã được tạo tại: $CHART_DIR"
-echo ""
+echo "✅ Helm chart đã được tạo tại $CHART_DIR"
 echo "📦 Tiếp theo:"
 echo "1. cd $CHART_DIR"
 echo "2. helm dependency update"
-echo "3. Cài đặt AWS Load Balancer Controller nếu chưa có:"
-echo "   https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html"
-echo "4. helm upgrade --install simpleauth . --namespace simpleauth --create-namespace \\"
-echo "     --set postgresql.auth.password=<your-password> \\"
-echo "     --set api.jwtSecret=<your-jwt-secret>"
-echo ""
-echo "Sau khi cài đặt, truy cập ứng dụng qua ALB DNS:"
-echo "  kubectl -n simpleauth get ingress"
+echo "3. Tạo secret ecr-secret (nếu chưa có):"
+echo "   kubectl -n simpleauth create secret docker-registry ecr-secret ..."
+echo "4. Cài đặt:"
+echo "   helm install simpleauth . -n simpleauth --create-namespace"

@@ -33,3 +33,10 @@ aws ecr create-repository \
   --region ap-southeast-1
 
 docker push 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/postgresql:latest
+
+kubectl create namespace simpleauth --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n simpleauth create secret docker-registry ecr-secret \
+  --docker-server=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password=$(aws ecr get-login-password --region ap-southeast-1) \
+  --dry-run=client -o yaml | kubectl apply -f -

@@ -13,3 +13,5 @@ database:
   port: 5432
   name: ""
   username: ""
+  password: ""
+imagePullSecrets: []

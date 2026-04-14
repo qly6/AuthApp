@@ -1,26 +1,13 @@
-cd simpleauth-chart
-helm dependency update
-helm upgrade --install simpleauth . \
-  --namespace simpleauth --create-namespace \
-  --set postgresql.auth.password=StrongPassword123 \
-  --set api.jwtSecret=your-strong-secret-at-least-32-characters-long
+helm uninstall simpleauth -n simpleauth
 
-kubectl -n simpleauth get pods,svc,pvc
+kubectl -n simpleauth delete secret ecr-secret --ignore-not-found
 
-helm install simpleauth . \
-  --namespace simpleauth \
-  --set api.image.repository=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-api \
-  --set ui.image.repository=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-ui \
-  --set ui.apiUrl="/api" \
-  --set postgresql.auth.password=StrongDBPassword123 \
-  --set api.jwtSecret="your-strong-secret-at-least-32-characters-long" \
-  --set api.imagePullSecrets[0].name=ecr-secret \
-  --set ui.imagePullSecrets[0].name=ecr-secret \
-  --set postgresql.primary.persistence.enabled=false \
-  --set postgresql.image.registry=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com \
-  --set postgresql.image.repository=postgresql \
-  --set postgresql.image.tag=latest \
-  --set postgresql.imagePullSecrets[0].name=ecr-secret \
+kubectl -n simpleauth create secret docker-registry ecr-secret \
+  --docker-server=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password=$(aws ecr get-login-password --region ap-southeast-1)
+
+helm install simpleauth . -n simpleauth \
   --set ingress.enabled=true \
   --set ingress.className=alb \
   --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"=internet-facing \
@@ -35,5 +22,3 @@ helm install simpleauth . \
   --set ingress.hosts[0].paths[1].pathType="Prefix" \
   --set ingress.hosts[0].paths[1].serviceName="simpleauth-api" \
   --set ingress.hosts[0].paths[1].servicePort=80
-
-	helm uninstall simpleauth -n simpleauth

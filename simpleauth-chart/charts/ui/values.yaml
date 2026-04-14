@@ -7,4 +7,5 @@ service:
   type: ClusterIP
   port: 80
 resources: {}
-apiUrl: "http://simpleauth-api:80/api"
+apiUrl: "/api"
+imagePullSecrets: []

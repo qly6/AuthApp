@@ -1,15 +1,16 @@
 global:
   environment: dev
 
+# PostgreSQL subchart
 postgresql:
   enabled: true
   auth:
     database: simpleauthdb
     username: postgres
-    password: ""
+    password: "StrongDBPassword123"
   primary:
     persistence:
-      size: 8Gi
+      enabled: false
     resources:
       limits:
         cpu: 500m
@@ -17,13 +18,18 @@ postgresql:
       requests:
         cpu: 250m
         memory: 256Mi
-  service:
-    type: ClusterIP
+  image:
+    registry: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com
+    repository: postgresql
+    tag: latest
+  imagePullSecrets:
+    - name: ecr-secret
 
+# API subchart
 api:
   replicaCount: 2
   image:
-    repository: simpleauth-api
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-api
     tag: latest
     pullPolicy: Always
   service:
@@ -36,17 +42,21 @@ api:
     requests:
       cpu: 250m
       memory: 256Mi
-  jwtSecret: "change-me-in-production"
+  jwtSecret: "your-strong-secret-at-least-32-characters-long"
   database:
     host: "simpleauth-postgresql"
     port: 5432
-    name: simpleauthdb
-    username: postgres
+    name: "simpleauthdb"
+    username: "postgres"
+    password: "StrongDBPassword123"   # Dùng trực tiếp thay vì secret để tránh lỗi
+  imagePullSecrets:
+    - name: ecr-secret
 
+# UI subchart
 ui:
   replicaCount: 2
   image:
-    repository: simpleauth-ui
+    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/quyen-simpleauth-ui
     tag: latest
     pullPolicy: Always
   service:
@@ -59,8 +69,11 @@ ui:
     requests:
       cpu: 100m
       memory: 128Mi
-  apiUrl: "http://simpleauth-api:80/api"
+  apiUrl: "/api"
+  imagePullSecrets:
+    - name: ecr-secret
 
+# Ingress configuration
 ingress:
   enabled: true
   className: "alb"
