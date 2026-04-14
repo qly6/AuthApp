@@ -22,7 +22,7 @@ services:
 
   api:
     build:
-      context: ./SimpleAuthApi/SimpleAuthApi
+      context: ./backend/SimpleAuthApi/SimpleAuthApi
       dockerfile: Dockerfile
     container_name: simpleauth_api
     environment:
@@ -41,7 +41,7 @@ services:
 
   ui:
     build:
-      context: ./simple-auth-ui
+      context: ./frontend/SimpleAuthUi
       dockerfile: Dockerfile
     container_name: simpleauth_ui
     environment:

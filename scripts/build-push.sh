@@ -12,7 +12,7 @@ ECR_BASE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 API_REPO="quyen-simpleauth-api"
 UI_REPO="quyen-simpleauth-ui"
 
-API_CONTEXT="./backend/SimpleAuthApi"
+API_CONTEXT="./backend/SimpleAuthApi/SimpleAuthApi"
 UI_CONTEXT="./frontend/SimpleAuthUi"
 
 # Determine tag
