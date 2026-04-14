@@ -1,0 +1,133 @@
+name: Build and Deploy to EKS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:      # Cho phép chạy thủ công từ GitHub UI
+
+env:
+  AWS_REGION: ap-southeast-1
+  AWS_ACCOUNT_ID: "296725355870"
+  ECR_REGISTRY: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com
+  API_REPO: quyen-simpleauth-api
+  UI_REPO: quyen-simpleauth-ui
+  K8S_NAMESPACE: simpleauth
+  HELM_RELEASE: simpleauth
+  EKS_CLUSTER: retail-vti-do2508-de000159-quyen-eksdemo
+
+permissions:
+  id-token: write        # Cần cho OIDC authentication
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      api_tag: ${{ steps.api_meta.outputs.version }}
+      ui_tag: ${{ steps.ui_meta.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsEKSRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ---------- API Image ----------
+      - name: API Docker metadata
+        id: api_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/${{ env.API_REPO }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend/SimpleAuthApi
+          push: true
+          tags: ${{ steps.api_meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ---------- UI Image ----------
+      - name: UI Docker metadata
+        id: ui_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/${{ env.UI_REPO }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push UI image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend/SimpleAuthUi
+          push: true
+          tags: ${{ steps.ui_meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsEKSRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Deploy with Helm
+        run: |
+          cd infrastructure/helm/simpleauth-chart
+          helm dependency update
+
+          API_TAG="${{ needs.build-and-push.outputs.api_tag }}"
+          UI_TAG="${{ needs.build-and-push.outputs.ui_tag }}"
+
+          # Fallback nếu tag không được tạo (ví dụ: chạy lại workflow cũ)
+          [ -z "$API_TAG" ] && API_TAG="latest"
+          [ -z "$UI_TAG" ] && UI_TAG="latest"
+
+          echo "🚀 Deploying API tag: $API_TAG, UI tag: $UI_TAG"
+
+          helm upgrade --install ${{ env.HELM_RELEASE }} . \
+            --namespace ${{ env.K8S_NAMESPACE }} \
+            --create-namespace \
+            --set api.image.tag=${API_TAG} \
+            --set ui.image.tag=${UI_TAG} \
+            --set api.jwtSecret="${{ secrets.JWT_SECRET }}" \
+            --set api.database.password="${{ secrets.DB_PASSWORD }}" \
+            --set postgresql.auth.password="${{ secrets.DB_PASSWORD }}" \
+            --wait --timeout 5m
+
+      - name: Verify deployment
+        run: |
+          echo "📡 Checking pod status..."
+          kubectl -n ${{ env.K8S_NAMESPACE }} get pods
+          echo "🌐 Ingress address (may take a minute):"
+          kubectl -n ${{ env.K8S_NAMESPACE }} get ingress
