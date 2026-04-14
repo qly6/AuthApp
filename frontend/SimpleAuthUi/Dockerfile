@@ -10,6 +10,8 @@ RUN npm run build -- --configuration production
 FROM nginx:alpine
 COPY --from=build /app/dist/simple-auth-ui/browser /usr/share/nginx/html
 
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Copy script để thay thế env.js bằng giá trị từ biến môi trường khi container khởi động
 COPY docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh
