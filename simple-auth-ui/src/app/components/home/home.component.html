@@ -1,0 +1,10 @@
+<div class="home-container">
+  <header>
+    <h1>Chào mừng, {{ user?.username }}!</h1>
+    <button (click)="logout()">Đăng xuất</button>
+  </header>
+  <main>
+    <p>Email: {{ user?.email }}</p>
+    <p>Bạn đã đăng nhập thành công.</p>
+  </main>
+</div>

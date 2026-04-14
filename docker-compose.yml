@@ -22,13 +22,14 @@ services:
 
   api:
     build:
-      context: ./SimpleAuthApi
+      context: ./SimpleAuthApi/SimpleAuthApi
       dockerfile: Dockerfile
     container_name: simpleauth_api
     environment:
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB:-SimpleAuthDb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-MySecretPassword123!}
       - Jwt__Key=${JWT_SECRET_KEY:-ThisIsASecretKeyForDevelopmentPurposesOnly12345!}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - DOTNET_RUNNING_IN_CONTAINER=true
     ports:
       - "5000:80"
     depends_on:
@@ -37,6 +38,20 @@ services:
     networks:
       - simpleauth_network
     restart: on-failure
+
+  ui:
+    build:
+      context: ./simple-auth-ui
+      dockerfile: Dockerfile
+    container_name: simpleauth_ui
+    environment:
+      - API_URL=http://localhost:5000
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+    networks:
+      - simpleauth_network
 
 volumes:
   postgres_data:
