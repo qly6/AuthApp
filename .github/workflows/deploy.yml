@@ -3,7 +3,7 @@ name: Build and Deploy to EKS
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:      # Cho phép chạy thủ công từ GitHub UI
+  workflow_dispatch:
 
 env:
   AWS_REGION: ap-southeast-1
@@ -16,7 +16,7 @@ env:
   EKS_CLUSTER: retail-vti-do2508-de000159-quyen-eksdemo
 
 permissions:
-  id-token: write        # Cần cho OIDC authentication
+  id-token: write
   contents: read
 
 jobs:
@@ -41,6 +41,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # --- DEBUG: Xem cấu trúc thư mục ---
+      - name: Debug directory structure
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Root contents ==="
+          ls -la
+          echo "=== backend/ ==="
+          ls -la backend/ || echo "backend/ not found"
+          echo "=== backend/SimpleAuthApi/ ==="
+          ls -la backend/SimpleAuthApi/ || echo "backend/SimpleAuthApi/ not found"
+          echo "=== backend/SimpleAuthApi/SimpleAuthApi/ ==="
+          ls -la backend/SimpleAuthApi/SimpleAuthApi/ || echo "backend/SimpleAuthApi/SimpleAuthApi/ not found"
+          echo "=== frontend/ ==="
+          ls -la frontend/ || echo "frontend/ not found"
+          echo "=== frontend/SimpleAuthUi/ ==="
+          ls -la frontend/SimpleAuthUi/ || echo "frontend/SimpleAuthUi/ not found"
+          echo "=== Searching for Dockerfile ==="
+          find . -name "Dockerfile" -type f
+
       # ---------- API Image ----------
       - name: API Docker metadata
         id: api_meta
@@ -54,7 +74,7 @@ jobs:
       - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend/SimpleAuthApi/SimpleAuthApi
+          context: ./backend/SimpleAuthApi/SimpleAuthApi   # ← ĐIỀU CHỈNH ĐÚNG VỚI CẤU TRÚC HIỆN TẠI
           push: true
           tags: ${{ steps.api_meta.outputs.tags }}
           cache-from: type=gha
@@ -73,7 +93,7 @@ jobs:
       - name: Build and push UI image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend/SimpleAuthUi
+          context: ./frontend/SimpleAuthUi   # Nếu UI cũng bị lồng thêm một cấp, sửa thành ./frontend/SimpleAuthUi/SimpleAuthUi
           push: true
           tags: ${{ steps.ui_meta.outputs.tags }}
           cache-from: type=gha
@@ -109,7 +129,7 @@ jobs:
           API_TAG="${{ needs.build-and-push.outputs.api_tag }}"
           UI_TAG="${{ needs.build-and-push.outputs.ui_tag }}"
 
-          # Fallback nếu tag không được tạo (ví dụ: chạy lại workflow cũ)
+          # Fallback nếu tag không được tạo
           [ -z "$API_TAG" ] && API_TAG="latest"
           [ -z "$UI_TAG" ] && UI_TAG="latest"
 
@@ -129,5 +149,5 @@ jobs:
         run: |
           echo "📡 Checking pod status..."
           kubectl -n ${{ env.K8S_NAMESPACE }} get pods
-          echo "🌐 Ingress address (may take a minute):"
+          echo "🌐 Ingress address:"
           kubectl -n ${{ env.K8S_NAMESPACE }} get ingress
