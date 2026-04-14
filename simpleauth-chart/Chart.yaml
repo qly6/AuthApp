@@ -14,5 +14,5 @@ dependencies:
     repository: "file://charts/ui"
   - name: postgresql
     version: 15.5.20
-    repository: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com/postgresql:latest
+    repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled

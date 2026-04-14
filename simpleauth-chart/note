@@ -3,7 +3,7 @@ helm dependency update
 helm upgrade --install simpleauth . \
   --namespace simpleauth --create-namespace \
   --set postgresql.auth.password=StrongPassword123 \
-  --set api.jwtSecret=YourSuperSecretKeyAtLeast32Characters
+  --set api.jwtSecret=your-strong-secret-at-least-32-characters-long
 
 kubectl -n simpleauth get pods,svc,pvc
 
@@ -20,6 +20,20 @@ helm install simpleauth . \
   --set postgresql.image.registry=296725355870.dkr.ecr.ap-southeast-1.amazonaws.com \
   --set postgresql.image.repository=postgresql \
   --set postgresql.image.tag=latest \
-  --set postgresql.imagePullSecrets[0].name=ecr-secret
-	
+  --set postgresql.imagePullSecrets[0].name=ecr-secret \
+  --set ingress.enabled=true \
+  --set ingress.className=alb \
+  --set ingress.annotations."alb\.ingress\.kubernetes\.io/scheme"=internet-facing \
+  --set ingress.annotations."alb\.ingress\.kubernetes\.io/target-type"=ip \
+  --set ingress.annotations."alb\.ingress\.kubernetes\.io/listen-ports"='[{"HTTP": 80}]' \
+  --set ingress.hosts[0].host="" \
+  --set ingress.hosts[0].paths[0].path="/" \
+  --set ingress.hosts[0].paths[0].pathType="Prefix" \
+  --set ingress.hosts[0].paths[0].serviceName="simpleauth-ui" \
+  --set ingress.hosts[0].paths[0].servicePort=80 \
+  --set ingress.hosts[0].paths[1].path="/api" \
+  --set ingress.hosts[0].paths[1].pathType="Prefix" \
+  --set ingress.hosts[0].paths[1].serviceName="simpleauth-api" \
+  --set ingress.hosts[0].paths[1].servicePort=80
+
 	helm uninstall simpleauth -n simpleauth
