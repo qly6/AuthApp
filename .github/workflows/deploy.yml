@@ -7,13 +7,14 @@ on:
 
 env:
   AWS_REGION: ap-southeast-1
-  AWS_ACCOUNT_ID: "296725355870"
-  ECR_REGISTRY: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com
   API_REPO: quyen-simpleauth-api
   UI_REPO: quyen-simpleauth-ui
   K8S_NAMESPACE: simpleauth
   HELM_RELEASE: simpleauth
   EKS_CLUSTER: retail-vti-do2508-de000159-quyen-eksdemo
+  POSTGRES_REGISTRY: docker.io
+  POSTGRES_REPOSITORY: bitnamilegacy/postgresql
+  POSTGRES_TAG: 16.2.0
 
 permissions:
   id-token: write
@@ -32,7 +33,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsEKSRole
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsEKSRole
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -41,32 +42,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # --- DEBUG: Xem cấu trúc thư mục ---
-      - name: Debug directory structure
-        run: |
-          echo "=== Current directory ==="
-          pwd
-          echo "=== Root contents ==="
-          ls -la
-          echo "=== backend/ ==="
-          ls -la backend/ || echo "backend/ not found"
-          echo "=== backend/SimpleAuthApi/ ==="
-          ls -la backend/SimpleAuthApi/ || echo "backend/SimpleAuthApi/ not found"
-          echo "=== backend/SimpleAuthApi/SimpleAuthApi/ ==="
-          ls -la backend/SimpleAuthApi/SimpleAuthApi/ || echo "backend/SimpleAuthApi/SimpleAuthApi/ not found"
-          echo "=== frontend/ ==="
-          ls -la frontend/ || echo "frontend/ not found"
-          echo "=== frontend/SimpleAuthUi/ ==="
-          ls -la frontend/SimpleAuthUi/ || echo "frontend/SimpleAuthUi/ not found"
-          echo "=== Searching for Dockerfile ==="
-          find . -name "Dockerfile" -type f
-
       # ---------- API Image ----------
       - name: API Docker metadata
         id: api_meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.ECR_REGISTRY }}/${{ env.API_REPO }}
+          images: ${{ secrets.ECR_REGISTRY }}/${{ env.API_REPO }}
           tags: |
             type=sha,prefix=
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
@@ -74,7 +55,7 @@ jobs:
       - name: Build and push API image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend/SimpleAuthApi/SimpleAuthApi   # ← ĐIỀU CHỈNH ĐÚNG VỚI CẤU TRÚC HIỆN TẠI
+          context: ./backend/SimpleAuthApi/SimpleAuthApi
           push: true
           tags: ${{ steps.api_meta.outputs.tags }}
           cache-from: type=gha
@@ -85,7 +66,7 @@ jobs:
         id: ui_meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.ECR_REGISTRY }}/${{ env.UI_REPO }}
+          images: ${{ secrets.ECR_REGISTRY }}/${{ env.UI_REPO }}
           tags: |
             type=sha,prefix=
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
@@ -93,7 +74,7 @@ jobs:
       - name: Build and push UI image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend/SimpleAuthUi   # Nếu UI cũng bị lồng thêm một cấp, sửa thành ./frontend/SimpleAuthUi/SimpleAuthUi
+          context: ./frontend/SimpleAuthUi
           push: true
           tags: ${{ steps.ui_meta.outputs.tags }}
           cache-from: type=gha
@@ -109,7 +90,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsEKSRole
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsEKSRole
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Update kubeconfig for EKS
@@ -143,9 +124,9 @@ jobs:
               --set-string api.jwtSecret="${{ secrets.JWT_SECRET }}" \
               --set-string api.database.password="${{ secrets.DB_PASSWORD }}" \
               --set-string postgresql.auth.password="${{ secrets.DB_PASSWORD }}" \
-              --set postgresql.image.registry=docker.io \
-              --set postgresql.image.repository=bitnamilegacy/postgresql \
-              --set postgresql.image.tag=16.2.0
+              --set postgresql.image.registry=${{ env.POSTGRES_REGISTRY }} \
+              --set postgresql.image.repository=${{ env.POSTGRES_REPOSITORY }} \
+              --set postgresql.image.tag=${{ env.POSTGRES_TAG }}
 
       - name: Verify deployment
         run: |
