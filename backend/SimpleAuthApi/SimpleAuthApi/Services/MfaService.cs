@@ -41,6 +41,14 @@ namespace SimpleAuthApi.Services
             var secretBytes = Base32Encoding.ToBytes(secret);
             var totp = new Totp(secretBytes);
             long timeStepMatched;
+
+            // Log thông tin debug
+            var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var currentTotp = totp.ComputeTotp();
+            Console.WriteLine($"[MFA] Current UTC timestamp: {currentTime}");
+            Console.WriteLine($"[MFA] Expected TOTP (server): {currentTotp}");
+            Console.WriteLine($"[MFA] Received TOTP (client): {code}");
+
             return totp.VerifyTotp(code, out timeStepMatched, new VerificationWindow(previous: 2, future: 2));
         }
     }
