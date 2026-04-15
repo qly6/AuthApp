@@ -33,3 +33,10 @@ spec:
           value: "Host={{ .Values.database.host }};Port={{ .Values.database.port }};Database={{ .Values.database.name }};Username={{ .Values.database.username }};Password={{ .Values.database.password }}"
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
+        volumeMounts:
+        - name: data-protection-keys
+          mountPath: /data-protection-keys
+      volumes:
+      - name: data-protection-keys
+        persistentVolumeClaim:
+          claimName: simpleauth-api-keys-pvc
