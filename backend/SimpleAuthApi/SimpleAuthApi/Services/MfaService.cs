@@ -41,7 +41,7 @@ namespace SimpleAuthApi.Services
             var secretBytes = Base32Encoding.ToBytes(secret);
             var totp = new Totp(secretBytes);
             long timeStepMatched;
-            return totp.VerifyTotp(code, out timeStepMatched, new VerificationWindow(previous: 1, future: 1));
+            return totp.VerifyTotp(code, out timeStepMatched, new VerificationWindow(previous: 2, future: 2));
         }
     }
 }
