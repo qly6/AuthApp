@@ -48,7 +48,7 @@ api:
     port: 5432
     name: "simpleauthdb"
     username: "postgres"
-    password: "StrongDBPassword123"   # Dùng trực tiếp thay vì secret để tránh lỗi
+    password: "StrongDBPassword123"
   imagePullSecrets:
     - name: ecr-secret
 
