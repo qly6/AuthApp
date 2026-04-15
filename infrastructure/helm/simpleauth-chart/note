@@ -15,5 +15,17 @@ cd simpleauth-chart
 helm dependency update
 helm install simpleauth . -n simpleauth
 
+helm upgrade simpleauth . -n simpleauth
+
+
 kubectl -n simpleauth get pods -w
 kubectl -n simpleauth get ingress -w
+
+helm upgrade --install simpleauth . \
+            --namespace simpleauth \
+            --create-namespace \
+            --set api.image.tag=a80e808 \
+            --set ui.image.tag=a80e808 \
+            --set api.jwtSecret="your-strong-secret-at-least-32-characters-long" \
+            --set api.database.password="StrongDBPassword123" \
+            --set postgresql.auth.password="StrongDBPassword123"

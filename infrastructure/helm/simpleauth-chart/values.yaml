@@ -19,9 +19,9 @@ postgresql:
         cpu: 250m
         memory: 256Mi
   image:
-    registry: 296725355870.dkr.ecr.ap-southeast-1.amazonaws.com
-    repository: postgresql
-    tag: latest
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+    tag: 16.2.0
   imagePullSecrets:
     - name: ecr-secret
 

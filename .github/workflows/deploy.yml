@@ -142,8 +142,7 @@ jobs:
             --set ui.image.tag=${UI_TAG} \
             --set api.jwtSecret="${{ secrets.JWT_SECRET }}" \
             --set api.database.password="${{ secrets.DB_PASSWORD }}" \
-            --set postgresql.auth.password="${{ secrets.DB_PASSWORD }}" \
-            --wait --timeout 5m
+            --set postgresql.auth.password="${{ secrets.DB_PASSWORD }}"
 
       - name: Verify deployment
         run: |
