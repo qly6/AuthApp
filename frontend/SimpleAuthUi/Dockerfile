@@ -26,5 +26,7 @@ RUN sed -i 's/\r$//' /docker-entrypoint.sh \
 
 EXPOSE 80
 
+RUN mkdir -p /usr/share/nginx/html/assets
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
