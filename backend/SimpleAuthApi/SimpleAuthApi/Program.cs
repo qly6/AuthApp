@@ -71,7 +71,7 @@ builder.Services.AddScoped<IMfaMethodManager, MfaMethodManager>();
 
 // Data Protection (persist keys to file system; use volume in k8s)
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(@"/app/keys"))
+    .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("SimpleAuth");
 
 // Cấu hình JWT Authentication
