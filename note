@@ -9,3 +9,13 @@ Ingress: kubectl -n simpleauth get ingress -w
 
 Clean up:
 ./scripts/destroy-all.sh
+
+http://simpleauth.hopto.org/
+
+
+	aws acm request-certificate \
+  --domain-name simpleauth.hopto.org \
+  --validation-method DNS
+
+	aws acm describe-certificate \
+  --certificate-arn arn:aws:acm:ap-southeast-1:296725355870:certificate/8a55f61a-182d-42d6-aa04-65c850657e1c

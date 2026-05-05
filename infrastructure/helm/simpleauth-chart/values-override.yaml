@@ -1,0 +1,50 @@
+api:
+  image:
+    tag: latest
+  database:
+    password: ${DB_PASSWORD}
+  jwtSecret: ${JWT_SECRET}
+  imagePullSecrets:
+    - name: ecr-secret
+
+ui:
+  image:
+    tag: latest
+  apiUrl: "/api"
+  imagePullSecrets:
+    - name: ecr-secret
+
+postgresql:
+  auth:
+    password: ${DB_PASSWORD}
+  primary:
+    persistence:
+      enabled: false
+  image:
+    registry: ${ECR_BASE}
+    repository: postgresql
+    tag: latest
+  imagePullSecrets:
+    - name: ecr-secret
+
+ingress:
+  enabled: true
+  className: nginx
+
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: simpleauth-ui
+          servicePort: 80
+        - path: /api
+          pathType: Prefix
+          serviceName: simpleauth-api
+          servicePort: 80
+
+  tls:
+    - secretName: simpleauth-tls

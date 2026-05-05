@@ -204,65 +204,41 @@ kubectl -n "$NAMESPACE" create secret docker-registry ecr-secret \
 # ------------------------------------------------------------------------
 # 8. Deploy Helm chart (no wait/timeout)
 # ------------------------------------------------------------------------
+echo "🧹 Cleaning old ALB webhooks (if exist)..."
+
+kubectl delete validatingwebhookconfiguration aws-load-balancer-webhook >/dev/null 2>&1 || true
+kubectl delete mutatingwebhookconfiguration aws-load-balancer-webhook >/dev/null 2>&1 || true
+
+echo "📌 Deploying NGINX Ingress (if not exists)..."
+
+if ! kubectl get ns ingress-nginx >/dev/null 2>&1; then
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+fi
+
+echo "⏳ Waiting for ingress controller..."
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+
+echo "📌 Checking TLS secret..."
+if ! kubectl get secret simpleauth-tls >/dev/null 2>&1; then
+  echo "❌ TLS secret 'simpleauth-tls' not found"
+  echo "👉 Run: kubectl create secret tls simpleauth-tls --cert=cert.pem --key=privkey.pem"
+  exit 1
+fi
+
 echo "📌 Deploying Helm chart..."
+
 HELM_CHART_DIR="$PROJECT_ROOT/infrastructure/helm/simpleauth-chart"
-cd "$HELM_CHART_DIR"
-helm dependency update
 
-cat > /tmp/override-values.yaml <<EOF
-api:
-  image:
-    tag: latest
-  database:
-    password: "$DB_PASSWORD"
-  jwtSecret: "$JWT_SECRET"
-  imagePullSecrets:
-    - name: ecr-secret
+helm dependency update "$HELM_CHART_DIR"
 
-ui:
-  image:
-    tag: latest
-  apiUrl: "/api"
-  imagePullSecrets:
-    - name: ecr-secret
+envsubst < "$HELM_CHART_DIR/values-override.yaml" > "$HELM_CHART_DIR/values.rendered.yaml"
 
-postgresql:
-  auth:
-    password: "$DB_PASSWORD"
-  primary:
-    persistence:
-      enabled: false
-  image:
-    registry: $ECR_BASE
-    repository: postgresql
-    tag: latest
-  imagePullSecrets:
-    - name: ecr-secret
-
-ingress:
-  enabled: true
-  className: alb
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
-    alb.ingress.kubernetes.io/healthcheck-path: /index.html
-  hosts:
-    - host: ""
-      paths:
-        - path: /
-          pathType: Prefix
-          serviceName: simpleauth-ui
-          servicePort: 80
-        - path: /api
-          pathType: Prefix
-          serviceName: simpleauth-api
-          servicePort: 80
-EOF
-
-helm upgrade --install "$HELM_RELEASE" . --namespace "$NAMESPACE" -f /tmp/override-values.yaml
-rm -f /tmp/override-values.yaml
-
+helm upgrade --install simpleauth "$HELM_CHART_DIR" \
+  -f "$HELM_CHART_DIR/values.rendered.yaml"
+	
 cd "$PROJECT_ROOT"
 
 # ------------------------------------------------------------------------
